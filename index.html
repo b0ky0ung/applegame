@@ -114,8 +114,8 @@ const imgs = IMG_SRC.map(s=>{ const i=new Image(); i.src=s; return i; });
 
 /* ────── 상수 ────── */
 const MAX_LV   = 7;                // 레벨 0~7
-const RADII    = Array.from({length:8},(_,i)=>Math.round(14*Math.pow(1.3,i)));
-const ZOOM     = [1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4];
+const RADII    = Array.from({length:8},(_,i)=>Math.round(18*Math.pow(1.3,i)));
+const ZOOM     = [1.0,1.4,1.8,2.4,2.8,3.4,3.8,4.4];
 const SCORE_TB = [10,20,30,40,50,60,70,80];
 
 const SETTLE_F  = 90;   // 게임오버까지 정착 프레임
@@ -134,22 +134,40 @@ const nxtCv    = document.getElementById('next-canvas');
 const nxtCtx   = nxtCv.getContext('2d');
 const relWrap  = document.getElementById('rel-wrap');
 
-canvas.width = LW; canvas.height = LH;
+let canvasScale = 1; // CSS 스케일 (logical → CSS px)
 
 function scaleCanvas(){
-  const hh = document.getElementById('header').getBoundingClientRect().height;
+  const dpr = window.devicePixelRatio || 1;
+  const hh  = document.getElementById('header').getBoundingClientRect().height;
   const avW = Math.min(window.innerWidth, 420);
   const avH = window.innerHeight - hh - 6;
-  const sc  = Math.min(avW/LW, avH/LH);
-  const cw  = Math.floor(LW*sc);
-  const ch  = Math.floor(LH*sc);
+  canvasScale = Math.min(avW/LW, avH/LH);
+  const cw = Math.floor(LW * canvasScale);
+  const ch = Math.floor(LH * canvasScale);
+  // 물리 canvas 크기 = CSS px * dpr → Retina 선명도
+  canvas.width  = Math.round(cw * dpr);
+  canvas.height = Math.round(ch * dpr);
   canvas.style.width  = cw+'px';
   canvas.style.height = ch+'px';
   relWrap.style.width  = cw+'px';
   relWrap.style.height = ch+'px';
+  // ctx 변환: logical 좌표 → physical pixel
+  ctx.setTransform(canvasScale * dpr, 0, 0, canvasScale * dpr, 0, 0);
 }
+
+// next-canvas Retina 처리
+function setupNextCanvas(){
+  const dpr = window.devicePixelRatio || 1;
+  nxtCv.width  = Math.round(52 * dpr);
+  nxtCv.height = Math.round(52 * dpr);
+  nxtCv.style.width  = '52px';
+  nxtCv.style.height = '52px';
+  nxtCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
 scaleCanvas();
-window.addEventListener('resize', scaleCanvas);
+setupNextCanvas();
+window.addEventListener('resize', ()=>{ scaleCanvas(); });
 
 /* ────── 상태 ────── */
 let engine, world, runner, rafId;
